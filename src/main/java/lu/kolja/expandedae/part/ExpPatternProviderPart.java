@@ -1,40 +1,28 @@
 package lu.kolja.expandedae.part;
 
 import appeng.api.parts.IPartItem;
-import appeng.api.parts.IPartModel;
-import appeng.core.AppEngBase;
 import appeng.helpers.patternprovider.PatternProviderLogic;
-import appeng.items.parts.PartModels;
 import appeng.menu.ISubMenu;
 import appeng.menu.MenuOpener;
 import appeng.menu.locator.MenuLocators;
-import appeng.parts.PartModel;
 import appeng.parts.crafting.PatternProviderPart;
-import lu.kolja.expandedae.Expandedae;
 import lu.kolja.expandedae.block.block.ExpPatternProviderBlock;
 import lu.kolja.expandedae.definition.ExpItems;
 import lu.kolja.expandedae.definition.ExpMenus;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Arrays;
-import java.util.List;
-
+/**
+ * Round 18 note on models: AE2 26.1.x removed {@code appeng.api.parts.IPartModel},
+ * {@code appeng.parts.PartModel} and the {@code @PartModels} annotation. Part appearance is now
+ * data-driven — the model is declared once in {@link lu.kolja.expandedae.datagen.ExpModelProvider}
+ * via {@code PartModelOutput} and resolved by {@code appeng.client.api.model.parts.*}. The
+ * on/off/has-channel distinction that {@code getStaticModels()} used to make by hand is now made
+ * by {@code StatusIndicatorPartModel}, driven by {@code AEBasePart.collectModelData(...)}, which
+ * the inherited {@link PatternProviderPart} already populates. Nothing to override here.
+ */
 public class ExpPatternProviderPart extends PatternProviderPart {
-    public static List<ResourceLocation> MODELS = Arrays.asList(
-            Expandedae.makeId("part/exp_pattern_provider_base"),
-            ResourceLocation.fromNamespaceAndPath(AppEngBase.MOD_ID, "part/interface_on"),
-            ResourceLocation.fromNamespaceAndPath(AppEngBase.MOD_ID, "part/interface_off"),
-            ResourceLocation.fromNamespaceAndPath(AppEngBase.MOD_ID, "part/interface_has_channel")
-    );
-    @PartModels
-    public static final PartModel MODELS_OFF = new PartModel(MODELS.get(0), MODELS.get(2));
-    @PartModels
-    public static final PartModel MODELS_ON = new PartModel(MODELS.get(0), MODELS.get(1));
-    @PartModels
-    public static final PartModel MODELS_HAS_CHANNEL = new PartModel(MODELS.get(0), MODELS.get(3));
 
     public ExpPatternProviderPart(IPartItem<?> partItem) {
         super(partItem);
@@ -47,7 +35,7 @@ public class ExpPatternProviderPart extends PatternProviderPart {
 
     @Override
     public boolean onUseWithoutItem(Player p, Vec3 pos) {
-        if (!p.getCommandSenderWorld().isClientSide()) {
+        if (!p.level().isClientSide()) {
             MenuOpener.open(ExpMenus.EXP_PATTERN_PROVIDER.get(), p, MenuLocators.forPart(this));
         }
         return true;
@@ -56,17 +44,6 @@ public class ExpPatternProviderPart extends PatternProviderPart {
     @Override
     public void returnToMainMenu(Player player, ISubMenu subMenu) {
         MenuOpener.returnTo(ExpMenus.EXP_PATTERN_PROVIDER.get(), player, subMenu.getLocator());
-    }
-
-    @Override
-    public IPartModel getStaticModels() {
-        if (isActive() && isPowered()) {
-            return MODELS_HAS_CHANNEL;
-        } else if (isPowered()) {
-            return MODELS_ON;
-        } else {
-            return MODELS_OFF;
-        }
     }
 
     @Override

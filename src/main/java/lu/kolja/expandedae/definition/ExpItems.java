@@ -2,11 +2,9 @@ package lu.kolja.expandedae.definition;
 
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartItem;
-import appeng.api.parts.PartModels;
 import appeng.core.definitions.ItemDefinition;
 import appeng.items.materials.UpgradeCardItem;
 import appeng.items.parts.PartItem;
-import appeng.items.parts.PartModelsHelper;
 import lu.kolja.expandedae.Expandedae;
 import lu.kolja.expandedae.item.misc.ExpPatternProviderUpgradeItem;
 import lu.kolja.expandedae.part.ExpPatternProviderPart;
@@ -17,11 +15,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 @SuppressWarnings("ALL")
@@ -57,10 +57,11 @@ public class ExpItems {
             "auto_complete_card",
             p -> new UpgradeCardItem(p) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag advancedTooltips) {
-                    tooltip.add(Component.translatable("item.expandedae.auto_complete_card.tooltip.1").withStyle(ChatFormatting.GRAY));
-                    tooltip.add(Component.translatable("item.expandedae.auto_complete_card.tooltip.2").withStyle(ChatFormatting.ITALIC).withStyle(ChatFormatting.RED));
-                    super.appendHoverText(stack, context, tooltip, advancedTooltips);
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay,
+                        Consumer<Component> tooltip, TooltipFlag advancedTooltips) {
+                    tooltip.accept(Component.translatable("item.expandedae.auto_complete_card.tooltip.1").withStyle(ChatFormatting.GRAY));
+                    tooltip.accept(Component.translatable("item.expandedae.auto_complete_card.tooltip.2").withStyle(ChatFormatting.ITALIC).withStyle(ChatFormatting.RED));
+                    super.appendHoverText(stack, context, tooltipDisplay, tooltip, advancedTooltips);
                 }
             }
     );
@@ -70,9 +71,10 @@ public class ExpItems {
             "pattern_refiller_card",
             p -> new UpgradeCardItem(p) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag advancedTooltips) {
-                    tooltip.add(Component.translatable("item.expandedae.pattern_refiller_card.tooltip.1").withStyle(ChatFormatting.GRAY));
-                    super.appendHoverText(stack, context, tooltip, advancedTooltips);
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay,
+                        Consumer<Component> tooltip, TooltipFlag advancedTooltips) {
+                    tooltip.accept(Component.translatable("item.expandedae.pattern_refiller_card.tooltip.1").withStyle(ChatFormatting.GRAY));
+                    super.appendHoverText(stack, context, tooltipDisplay, tooltip, advancedTooltips);
                 }
             }
     );
@@ -82,17 +84,19 @@ public class ExpItems {
             "greater_accel_card",
             p -> new UpgradeCardItem(p) {
                 @Override
-                public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag advancedTooltips) {
-                    tooltip.add(Component.translatable("item.expandedae.greater_accel_card.tooltip.1").withStyle(ChatFormatting.GRAY));
-                    tooltip.add(Component.translatable("item.expandedae.greater_accel_card.tooltip.2").withStyle(ChatFormatting.ITALIC).withStyle(ChatFormatting.RED));
-                    super.appendHoverText(stack, context, tooltip, advancedTooltips);
+                public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay,
+                        Consumer<Component> tooltip, TooltipFlag advancedTooltips) {
+                    tooltip.accept(Component.translatable("item.expandedae.greater_accel_card.tooltip.1").withStyle(ChatFormatting.GRAY));
+                    tooltip.accept(Component.translatable("item.expandedae.greater_accel_card.tooltip.2").withStyle(ChatFormatting.ITALIC).withStyle(ChatFormatting.RED));
+                    super.appendHoverText(stack, context, tooltipDisplay, tooltip, advancedTooltips);
                 }
             }
     );
 
-    public static final ItemDefinition<Item> WIRELESS_EXP_ENCODING_TERMINAL = item("Wireless Expanded Pattern Encoding Terminal",
+    public static final ItemDefinition<lu.kolja.expandedae.terminal.wtlib.ExpItemWET> WIRELESS_EXP_ENCODING_TERMINAL =
+            item("Wireless Expanded Pattern Encoding Terminal",
             "wireless_exp_encoding_terminal",
-            p -> WTLibIntegration.TERMINAL
+            WTLibIntegration::createTerminal
     );
 
     public static List<ItemDefinition<?>> getItems() {
@@ -101,7 +105,10 @@ public class ExpItems {
 
     public static <T extends IPart> ItemDefinition<PartItem<T>> part(
             String englishName, String id, Class<T> partClass, Function<IPartItem<T>, T> factory) {
-        PartModels.registerModels(PartModelsHelper.createModels(partClass));
+        // Round 18: AE2 26.1.x no longer has appeng.api.parts.PartModels /
+        // appeng.items.parts.PartModelsHelper. Part models are data-driven now: they are emitted
+        // by the model data provider (ExpModelProvider -> PartModelOutput) and resolved through
+        // appeng.client.api.model.parts.*, so there is nothing to register at item-definition time.
         return item(englishName, id, p -> new PartItem<>(p, partClass, factory));
     }
 

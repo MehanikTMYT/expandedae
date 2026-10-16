@@ -4,7 +4,6 @@
   "compatibilityLevel": "JAVA_21",
   "plugin": "lu.kolja.expandedae.mixin.MixinPlugin",
   "mixins": [
-    "accessor.AccessorBuiltInModelHooks",
     "accessor.AccessorCraftingCpuLogic",
     "accessor.AccessorExecutingCraftingJob",
     "accessor.AccessorExecutingCraftingJob$AccessorTaskProgress",
@@ -15,7 +14,6 @@
     "compat.advancedae.AAEAccessorExecutingCraftingJob$AAEAccessorTaskProgress",
     "compat.appflux.AppFluxMixinPatternProviderLogic",
     "compat.appflux.AppFluxMixinPatternProviderMenu",
-    "compat.jei.MixinJEIPlugin",
     "cpu.MixinCPUSelectionList",
     "cpu.MixinCraftingCPUCluster",
     "misc.MixinControllerValidator",
@@ -28,7 +26,6 @@
   "client": [
     "compat.appflux.AppFluxMixinPatternProviderScreen",
     "cpu.MixinCraftConfirmScreen",
-    "cpu.MixinModelBakery",
     "misc.MixinSettingToggleButton",
     "patternprovider.MixinPatternProviderScreen",
     "terminal.MixinPatternEncodingTermScreen"

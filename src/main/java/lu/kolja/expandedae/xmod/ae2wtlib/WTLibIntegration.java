@@ -17,26 +17,39 @@ import static lu.kolja.expandedae.client.gui.widgets.ExpIcon.EXP_PATTERN_ENCODIN
 import static lu.kolja.expandedae.client.gui.widgets.ExpIcon.TEXTURE;
 
 public class WTLibIntegration {
-    public static final Item TERMINAL = new ExpItemWET();
+    /**
+     * Round 18: MC 1.21.2+ requires every Item to be constructed with the registry-created
+     * {@link Item.Properties} (they carry the item's {@code ResourceKey}), so the terminal can no
+     * longer be a {@code static final} built at class-init with no arguments. It is now created by
+     * {@link #createTerminal(Item.Properties)}, which the DeferredRegister supplier in
+     * {@code ExpItems.WIRELESS_EXP_ENCODING_TERMINAL} invokes. The AE2WTLib terminal registration
+     * and the grid-linkable registration move with it, so they still happen exactly once and at the
+     * same point in the lifecycle as before (first touch of this class from the item supplier).
+     */
+    public static ExpItemWET TERMINAL;
 
-    static {
+    public static ExpItemWET createTerminal(Item.Properties properties) {
+        if (TERMINAL != null) {
+            return TERMINAL;
+        }
+        TERMINAL = new ExpItemWET(properties);
         var icon = new Icon(EXP_PATTERN_ENCODING.x, EXP_PATTERN_ENCODING.y, 16, 16, TEXTURE);
         AddTerminalEvent.register(
                 event -> event.builder(
                         "exp_encoding",
                         ExpWETMenuHost::new,
                         ExpWETMenu.TYPE,
-                        (ExpItemWET) TERMINAL,
+                        TERMINAL,
                         icon
                 ).addTerminal()
         );
         GridLinkables.register(TERMINAL, WirelessTerminalItem.LINKABLE_HANDLER);
+        return TERMINAL;
     }
 
     public static ItemStack getChargedTerminal() {
         var stack = new ItemStack(TERMINAL);
-        var terminal = (ExpItemWET) TERMINAL;
-        terminal.injectAEPower(stack, terminal.getAEMaxPower(stack), Actionable.MODULATE);
+        TERMINAL.injectAEPower(stack, TERMINAL.getAEMaxPower(stack), Actionable.MODULATE);
         return stack;
     }
 

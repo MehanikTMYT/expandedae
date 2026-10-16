@@ -3,116 +3,122 @@ package lu.kolja.expandedae.client.render;
 import appeng.client.render.crafting.AbstractCraftingUnitModelProvider;
 import appeng.client.render.crafting.LightBakedModel;
 import appeng.client.render.crafting.UnitBakedModel;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import lu.kolja.expandedae.Expandedae;
 import lu.kolja.expandedae.enums.ExpTiers;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.Material;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.inventory.InventoryMenu;
-import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.ChunkRenderTypeSet;
-import net.neoforged.neoforge.client.model.data.ModelData;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.ModelDebugName;
+import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.client.resources.model.sprite.MaterialBaker;
+import net.minecraft.resources.Identifier;
+import net.neoforged.neoforge.client.model.block.CustomUnbakedBlockStateModel;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Function;
-
-public class ExpCraftingUnitModelProvider extends AbstractCraftingUnitModelProvider<ExpTiers> {
-    public static final List<Material> MATERIALS = new ArrayList<>();
-    public static final ChunkRenderTypeSet CUTOUT = ChunkRenderTypeSet.of(RenderType.cutout());
+/**
+ * Round 18 rewrite.
+ *
+ * <p>In 1.21.1 this class implemented the old {@code getMaterials()} / {@code getBakedModel(
+ * Function&lt;Material, TextureAtlasSprite&gt;)} contract and its models were injected at client
+ * construction time through {@code appeng.hooks.BuiltInModelHooks}. Both of those are gone in
+ * 26.1.2:
+ *
+ * <ul>
+ *   <li>{@code net.minecraft.client.resources.model.Material} moved to
+ *       {@code net.minecraft.client.resources.model.sprite.Material} and no longer carries an
+ *       atlas id — baking now goes through {@link MaterialBaker#get(Material, ModelDebugName)}
+ *       and yields a {@link Material.Baked}.</li>
+ *   <li>{@link AbstractCraftingUnitModelProvider} now declares a single
+ *       {@code BlockStateModel bake(MaterialBaker)}.</li>
+ *   <li>{@code ChunkRenderTypeSet} / {@code ModelData} render-type overrides are gone; render
+ *       type selection is handled by the {@code CraftingCubeModel} base class itself.</li>
+ *   <li>Built-in models are no longer injected by id — a mod registers a
+ *       {@link CustomUnbakedBlockStateModel} codec and references it from its generated
+ *       blockstate JSON. AE2's own {@code CraftingCubeModel.Unbaked} is hard-bound to AE2's
+ *       {@code CraftingUnitType} enum, so an addon with its own tier enum needs its own
+ *       {@link Unbaked} record — that is {@link Unbaked} below.</li>
+ * </ul>
+ */
+public class ExpCraftingUnitModelProvider extends AbstractCraftingUnitModelProvider<ExpTiers>
+        implements ModelDebugName {
 
     protected static final Material RING_CORNER = texture("ring_corner");
     protected static final Material RING_SIDE_HOR = texture("ring_side_hor");
     protected static final Material RING_SIDE_VER = texture("ring_side_ver");
     protected static final Material UNIT_BASE = texture("unit_base");
     protected static final Material LIGHT_BASE = texture("light_base");
-    protected static final Material CPU_2_LIGHT = texture("exp_crafting_accelerator_2_light");
-    protected static final Material CPU_4_LIGHT = texture("exp_crafting_accelerator_4_light");
-    protected static final Material CPU_8_LIGHT = texture("exp_crafting_accelerator_8_light");
-    protected static final Material CPU_16_LIGHT = texture("exp_crafting_accelerator_16_light");
-    protected static final Material CPU_32_LIGHT = texture("exp_crafting_accelerator_32_light");
-    protected static final Material CPU_64_LIGHT = texture("exp_crafting_accelerator_64_light");
-    protected static final Material CPU_128_LIGHT = texture("exp_crafting_accelerator_128_light");
-    protected static final Material CPU_256_LIGHT = texture("exp_crafting_accelerator_256_light");
-    protected static final Material CPU_512_LIGHT = texture("exp_crafting_accelerator_512_light");
-    protected static final Material CPU_1K_LIGHT = texture("exp_crafting_accelerator_1k_light");
-    protected static final Material CPU_2K_LIGHT = texture("exp_crafting_accelerator_2k_light");
-    protected static final Material CPU_4K_LIGHT = texture("exp_crafting_accelerator_4k_light");
-    protected static final Material CPU_8K_LIGHT = texture("exp_crafting_accelerator_8k_light");
-    protected static final Material CPU_16K_LIGHT = texture("exp_crafting_accelerator_16k_light");
-    protected static final Material CPU_32K_LIGHT = texture("exp_crafting_accelerator_32k_light");
-    protected static final Material CPU_64K_LIGHT = texture("exp_crafting_accelerator_64k_light");
-    protected static final Material CPU_128K_LIGHT = texture("exp_crafting_accelerator_128k_light");
-    protected static final Material CPU_256K_LIGHT = texture("exp_crafting_accelerator_256k_light");
-    protected static final Material CPU_512K_LIGHT = texture("exp_crafting_accelerator_512k_light");
-    protected static final Material CPU_1M_LIGHT = texture("exp_crafting_accelerator_1m_light");
 
     public ExpCraftingUnitModelProvider(ExpTiers cpu) {
         super(cpu);
     }
 
-    @Override
-    public List<Material> getMaterials() {
-        return Collections.unmodifiableList(MATERIALS);
-    }
-
-    public TextureAtlasSprite getLightMaterial(Function<Material, TextureAtlasSprite> textureGetter) {
-        return switch (type) {
-            case TIER_2 -> textureGetter.apply(CPU_2_LIGHT);
-            case TIER_4 -> textureGetter.apply(CPU_4_LIGHT);
-            case TIER_8 -> textureGetter.apply(CPU_8_LIGHT);
-            case TIER_16 -> textureGetter.apply(CPU_16_LIGHT);
-            case TIER_32 -> textureGetter.apply(CPU_32_LIGHT);
-            case TIER_64 -> textureGetter.apply(CPU_64_LIGHT);
-            case TIER_128 -> textureGetter.apply(CPU_128_LIGHT);
-            case TIER_256 -> textureGetter.apply(CPU_256_LIGHT);
-            case TIER_512 -> textureGetter.apply(CPU_512_LIGHT);
-            case TIER_1K -> textureGetter.apply(CPU_1K_LIGHT);
-            case TIER_2K -> textureGetter.apply(CPU_2K_LIGHT);
-            case TIER_4K -> textureGetter.apply(CPU_4K_LIGHT);
-            case TIER_8K -> textureGetter.apply(CPU_8K_LIGHT);
-            case TIER_16K -> textureGetter.apply(CPU_16K_LIGHT);
-            case TIER_32K -> textureGetter.apply(CPU_32K_LIGHT);
-            case TIER_64K -> textureGetter.apply(CPU_64K_LIGHT);
-            case TIER_128K -> textureGetter.apply(CPU_128K_LIGHT);
-            case TIER_256K -> textureGetter.apply(CPU_256K_LIGHT);
-            case TIER_512K -> textureGetter.apply(CPU_512K_LIGHT);
-            case TIER_1M -> textureGetter.apply(CPU_1M_LIGHT);
-            default -> throw new IllegalArgumentException(
+    /**
+     * The per-tier light overlay. Texture names are derived from the tier's own CPU affix, which
+     * is exactly how the 1.21.1 version's hand-written switch was spelled
+     * ({@code exp_crafting_accelerator_<affix>_light}), so no texture had to be renamed.
+     */
+    private Material getLightMaterial() {
+        if (!type.isCPU()) {
+            throw new IllegalArgumentException(
                     "Crafting unit type " + type + " does not use a light texture.");
-        };
+        }
+        return texture(type.getCpuAffix() + "_light");
     }
 
     @Override
-    public BakedModel getBakedModel(Function<Material, TextureAtlasSprite> function) {
-        var ringCorner = function.apply(RING_CORNER);
-        var ringSideHor = function.apply(RING_SIDE_HOR);
-        var ringSideVer = function.apply(RING_SIDE_VER);
+    public BlockStateModel bake(MaterialBaker materialBaker) {
+        var ringCorner = materialBaker.get(RING_CORNER, this);
+        var ringSideHor = materialBaker.get(RING_SIDE_HOR, this);
+        var ringSideVer = materialBaker.get(RING_SIDE_VER, this);
 
-        return switch (type) {
-            case UNIT -> new UnitBakedModel(ringCorner, ringSideHor, ringSideVer, function.apply(UNIT_BASE)) {
-                @Override
-                public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource rand, ModelData data) {
-                    return CUTOUT;
-                }
-            };
-            default -> new LightBakedModel(ringCorner, ringSideHor, ringSideVer, function.apply(LIGHT_BASE), this.getLightMaterial(function)) {
-                @Override
-                @NotNull
-                public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data) {
-                    return CUTOUT;
-                }
-            };
-        };
+        if (type == ExpTiers.UNIT) {
+            return new UnitBakedModel(ringCorner, ringSideHor, ringSideVer,
+                    materialBaker.get(UNIT_BASE, this));
+        }
+        return new LightBakedModel(ringCorner, ringSideHor, ringSideVer,
+                materialBaker.get(LIGHT_BASE, this),
+                materialBaker.get(getLightMaterial(), this));
     }
 
     private static Material texture(String name) {
-        var material = new Material(InventoryMenu.BLOCK_ATLAS, Expandedae.makeId("block/crafting/" + name));
-        MATERIALS.add(material);
-        return material;
+        return new Material(Expandedae.makeId("block/crafting/" + name));
+    }
+
+    @Override
+    public String debugName() {
+        return getClass() + "[" + type + "]";
+    }
+
+    /**
+     * Data-driven replacement for the old {@code BuiltInModelHooks.addBuiltInModel(...)} call.
+     * Registered in {@code ExpandedaeClient} against {@code RegisterBlockStateModels} and
+     * referenced from the blockstate JSON emitted by {@code ExpModelProvider}.
+     */
+    public record Unbaked(ExpTiers type) implements CustomUnbakedBlockStateModel {
+        public static final Identifier ID = Expandedae.makeId("exp_crafting_cube");
+
+        private static final Codec<ExpTiers> TYPE_CODEC = Codec.STRING.xmap(
+                name -> ExpTiers.valueOf(name.toUpperCase(java.util.Locale.ROOT)),
+                type -> type.name().toLowerCase(java.util.Locale.ROOT));
+
+        public static final MapCodec<Unbaked> MAP_CODEC = RecordCodecBuilder.mapCodec(
+                instance -> instance.group(
+                        TYPE_CODEC.fieldOf("unit_type").forGetter(Unbaked::type))
+                        .apply(instance, Unbaked::new));
+
+        @Override
+        public BlockStateModel bake(ModelBaker baker) {
+            return new ExpCraftingUnitModelProvider(type).bake(baker.materials());
+        }
+
+        @Override
+        public void resolveDependencies(Resolver resolver) {
+        }
+
+        @Override
+        public MapCodec<Unbaked> codec() {
+            return MAP_CODEC;
+        }
     }
 }

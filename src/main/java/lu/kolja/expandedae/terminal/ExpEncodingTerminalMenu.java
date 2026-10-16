@@ -8,7 +8,9 @@ import appeng.api.upgrades.IUpgradeableItem;
 import appeng.core.definitions.AEItems;
 import appeng.helpers.IPatternTerminalMenuHost;
 import appeng.menu.me.items.PatternEncodingTermMenu;
+import appeng.menu.guisync.ClientActionKey;
 import appeng.util.ConfigInventory;
+import net.minecraft.network.codec.ByteBufCodecs;
 import lu.kolja.expandedae.definition.ExpItems;
 import lu.kolja.expandedae.definition.ExpMenus;
 import lu.kolja.expandedae.helper.misc.KeybindUtil;
@@ -21,16 +23,18 @@ import net.minecraft.world.item.ItemStack;
 import java.util.Objects;
 
 public class ExpEncodingTerminalMenu extends PatternEncodingTermMenu {
-    private static final String ACTION_MODIFY_PATTERN = "modifyPattern";
-    private static final String ACTION_MOVE_PATTERN = "movePattern";
+    // Round 18: AE2's client-action API is typed now - a ClientActionKey<T> plus an explicit
+    // StreamCodec, instead of a String name plus a Class<T> token.
+    private static final ClientActionKey<Integer> ACTION_MODIFY_PATTERN = new ClientActionKey<>("modifyPattern");
+    private static final ClientActionKey<Boolean> ACTION_MOVE_PATTERN = new ClientActionKey<>("movePattern");
 
     public ExpEncodingTerminalMenu(int id, Inventory ip, IPatternTerminalMenuHost host) {
         this(ExpMenus.EXP_ENCODING_TERMINAL.get(), id, ip, host);
     }
     public ExpEncodingTerminalMenu(MenuType<?> menuType, int id, Inventory ip, IPatternTerminalMenuHost host) {
         super(menuType, id, ip, host, true);
-        registerClientAction(ACTION_MODIFY_PATTERN, Integer.class, this::modifyPattern);
-        registerClientAction(ACTION_MOVE_PATTERN, Boolean.class, this::movePattern);
+        registerClientAction(ACTION_MODIFY_PATTERN, ByteBufCodecs.VAR_INT, this::modifyPattern);
+        registerClientAction(ACTION_MOVE_PATTERN, ByteBufCodecs.BOOL, this::movePattern);
     }
 
     @Override
@@ -118,8 +122,12 @@ public class ExpEncodingTerminalMenu extends PatternEncodingTermMenu {
             var player = this.getPlayer();
             // Need to do this check first because #addItem ignores that there are no free slots if the player is in creative mode
             if (player.getInventory().getFreeSlot() > 0) {
-                player.addItem(encodedPatternSlot.getItem());
-                encodedPatternSlot.setChanged();
+                // Round 18: PatternEncodingTermMenu#encodedPatternSlot is private; ExpandedAE already
+                // ships AccessorPatternEncodingTermMenu for exactly this, so use it rather than
+                // widening AE2.
+                var slot = ((AccessorPatternEncodingTermMenu) this).getEncodedPatternSlot();
+                player.addItem(slot.getItem());
+                slot.setChanged();
             }
         }
     }

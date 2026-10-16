@@ -10,7 +10,7 @@ import lu.kolja.expandedae.block.entity.ExpIOPortBlockEntity;
 import lu.kolja.expandedae.menu.ExpPatternProviderMenu;
 import lu.kolja.expandedae.terminal.ExpEncodingTerminalMenu;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.MenuType;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -23,9 +23,9 @@ public class ExpMenus {
     public static final DeferredRegister<MenuType<?>> DR =
             DeferredRegister.create(Registries.MENU, Expandedae.MODID);
 
-    private static final Map<ResourceLocation, MenuType<?>> MENU_TYPES = new HashMap<>();
+    private static final Map<Identifier, MenuType<?>> MENU_TYPES = new HashMap<>();
 
-    public static Map<ResourceLocation, MenuType<?>> getMenuTypes() {
+    public static Map<Identifier, MenuType<?>> getMenuTypes() {
         return Collections.unmodifiableMap(MENU_TYPES);
     }
 

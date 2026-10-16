@@ -10,6 +10,9 @@ import de.mari_023.ae2wtlib.api.AE2wtlibComponents;
 import de.mari_023.ae2wtlib.api.terminal.ItemWT;
 import de.mari_023.ae2wtlib.api.terminal.WTMenuHost;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
@@ -22,8 +25,12 @@ public class ExpWETMenuHost extends WTMenuHost
     public ExpWETMenuHost(ItemWT item, Player player, ItemMenuHostLocator locator,
                           BiConsumer<Player, ISubMenu> returnToMainMenu) {
         super(item, player, locator, returnToMainMenu);
-        logic.readFromNBT(getItemStack().getOrDefault(AE2wtlibComponents.PATTERN_ENCODING_LOGIC, new CompoundTag()),
-                player.registryAccess());
+        // Round 18: PatternEncodingLogic persistence is ValueInput/ValueOutput based. The AE2WTLib
+        // data component is still a CompoundTag, so it is wrapped rather than replaced.
+        logic.readFromNBT(TagValueInput.create(
+                ProblemReporter.DISCARDING,
+                player.registryAccess(),
+                getItemStack().getOrDefault(AE2wtlibComponents.PATTERN_ENCODING_LOGIC, new CompoundTag())));
     }
 
     @Override
@@ -38,8 +45,9 @@ public class ExpWETMenuHost extends WTMenuHost
 
     @Override
     public void markForSave() {
-        CompoundTag tag = getItemStack().getOrDefault(AE2wtlibComponents.PATTERN_ENCODING_LOGIC, new CompoundTag());
-        logic.writeToNBT(tag, getPlayer().registryAccess());
-        getItemStack().set(AE2wtlibComponents.PATTERN_ENCODING_LOGIC, tag);
+        var output = TagValueOutput.createWithContext(
+                ProblemReporter.DISCARDING, getPlayer().registryAccess());
+        logic.writeToNBT(output);
+        getItemStack().set(AE2wtlibComponents.PATTERN_ENCODING_LOGIC, output.buildResult());
     }
 }

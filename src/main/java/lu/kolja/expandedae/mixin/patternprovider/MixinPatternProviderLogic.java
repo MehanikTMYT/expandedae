@@ -26,8 +26,8 @@ import lu.kolja.expandedae.mixin.accessor.AccessorCraftingCpuLogic;
 import lu.kolja.expandedae.mixin.accessor.AccessorExecutingCraftingJob;
 import lu.kolja.expandedae.xmod.advancedae.AdvancedAE;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -95,20 +95,38 @@ public abstract class MixinPatternProviderLogic implements IUpgradeableObject, I
         this.expandedae$targetCaches = new PatternProviderTargetCache[6];
     }
 
+    /*
+     * Round 18 - the mixin Round 16 flagged as a guaranteed startup crash.
+     *
+     * 1.21.1 target: PatternProviderLogic#writeToNBT(CompoundTag, HolderLookup.Provider)
+     * 26.1.2 target: PatternProviderLogic#writeToNBT(ValueOutput)
+     *
+     * Why the injection exists at all: this mixin gives every vanilla AE2 Pattern Provider an
+     * extra IUpgradeInventory (eae_$upgrades) that AE2 knows nothing about. It has to be persisted
+     * alongside the provider's own state, in the provider's own NBT subtree, or the installed
+     * upgrade cards vanish on world reload. AE2 26.1.2 still offers no public
+     * "extra addon data" persistence hook on PatternProviderLogic or PatternProviderLogicHost
+     * (checked: PatternProviderLogicHost exposes only getLogic/getBlockEntity/getTargets/
+     * saveChanges/config/priority), so per brief section 89 the correct option is (4) a narrow
+     * updated mixin, not (5) an AE2 API extension and not a broad HEAD/TAIL hack. The injection
+     * point is unchanged in kind - still TAIL of the same logical method - only the descriptor and
+     * the persistence primitive change: IUpgradeInventory itself moved to
+     * writeToNBT(ValueOutput, String) / readFromNBT(ValueInput, String).
+     */
     @Inject(
-            method = "writeToNBT",
+            method = "writeToNBT(Lnet/minecraft/world/level/storage/ValueOutput;)V",
             at = @At("TAIL")
     )
-    private void eae_$saveUpgrade(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
-        this.eae_$upgrades.writeToNBT(tag, "upgrades", registries);
+    private void eae_$saveUpgrade(ValueOutput output, CallbackInfo ci) {
+        this.eae_$upgrades.writeToNBT(output, "upgrades");
     }
 
     @Inject(
-            method = "readFromNBT",
+            method = "readFromNBT(Lnet/minecraft/world/level/storage/ValueInput;)V",
             at = @At("TAIL")
     )
-    private void eae_$loadUpgrade(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
-        this.eae_$upgrades.readFromNBT(tag, "upgrades", registries);
+    private void eae_$loadUpgrade(ValueInput input, CallbackInfo ci) {
+        this.eae_$upgrades.readFromNBT(input, "upgrades");
     }
 
     @Inject(
@@ -161,10 +179,13 @@ public abstract class MixinPatternProviderLogic implements IUpgradeableObject, I
 
     @Inject(
             method = "pushPattern",
-            at = @At("HEAD")
+            at = @At("RETURN")
     )
     private void expandedae$onPushPatternSuccess(IPatternDetails patternDetails, KeyCounter[] inputHolder, CallbackInfoReturnable<Boolean> cir) {
-        expandedae$tryAutoCompleteCraft(patternDetails);
+        // Upstream 6f5a9d1: only after the pattern was actually pushed.
+        if (cir.getReturnValue()) {
+            expandedae$tryAutoCompleteCraft(patternDetails);
+        }
     }
 
     @Unique
@@ -176,7 +197,7 @@ public abstract class MixinPatternProviderLogic implements IUpgradeableObject, I
             if (cpu instanceof CraftingCPUCluster cluster) {
                 var task = ((AccessorExecutingCraftingJob) ((AccessorCraftingCpuLogic) cluster.craftingLogic).getJob()).getTasks().get(details);
                 if (task != null && task.getValue() <= 1) {
-                    cluster.cancelJob();
+                    ((AccessorCraftingCpuLogic) cluster.craftingLogic).eae$finishJob(true);
                     return;
                 }
                 continue;

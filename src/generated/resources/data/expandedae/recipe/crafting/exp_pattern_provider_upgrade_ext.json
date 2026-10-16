@@ -8,19 +8,14 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "C": {
-      "item": "extendedae:concurrent_processor"
-    },
-    "E": {
-      "item": "extendedae:ex_pattern_provider"
-    }
+    "C": "extendedae:concurrent_processor",
+    "E": "extendedae:ex_pattern_provider"
   },
   "pattern": [
     "CE",
     "E "
   ],
   "result": {
-    "count": 1,
     "id": "expandedae:exp_pattern_provider_upgrade"
   }
 }

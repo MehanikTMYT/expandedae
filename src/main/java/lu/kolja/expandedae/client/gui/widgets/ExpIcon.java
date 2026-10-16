@@ -3,7 +3,7 @@ package lu.kolja.expandedae.client.gui.widgets;
 import appeng.client.gui.style.Blitter;
 import de.mari_023.ae2wtlib.api.gui.Icon;
 import lu.kolja.expandedae.Expandedae;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public enum ExpIcon {
 
@@ -34,7 +34,7 @@ public enum ExpIcon {
     public final int height;
     public static final int TEXTURE_WIDTH = 256;
     public static final int TEXTURE_HEIGHT = 256;
-    public static final ResourceLocation TEXTURE_RL = Expandedae.makeId("textures/gui/states.png");
+    public static final Identifier TEXTURE_RL = Expandedae.makeId("textures/gui/states.png");
     public static final Icon.Texture TEXTURE = new Icon.Texture(TEXTURE_RL, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 
 

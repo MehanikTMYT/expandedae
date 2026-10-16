@@ -21,11 +21,7 @@ public class AdvancedAE {
     }
 
     public static void handleCpu(ICraftingCPU cpu, IPatternDetails details) {
-        if (cpu instanceof AdvCraftingCPU advCpu) {
-            var task = ((AAEAccessorExecutingCraftingJob) ((AAEAccessorAdvCraftingCPULogic) advCpu.craftingLogic).getJob()).getTasks().get(details);
-            if (task != null && task.getValue() <= 1) {
-                advCpu.cancelJob();
-            }
-        }
+        // Upstream 6f5a9d1 disabled the AdvancedAE CPU path ("never worked in the first place, to rework later");
+        // kept as a no-op so the call site stays. The finishJob invoker is available for the rework.
     }
 }

@@ -10,16 +10,15 @@ import appeng.helpers.patternprovider.PatternProviderLogicHost;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantics;
 import appeng.menu.ToolboxMenu;
+import appeng.menu.guisync.ClientActionKey;
 import appeng.menu.guisync.GuiSync;
+import net.minecraft.network.codec.ByteBufCodecs;
 import appeng.menu.implementations.PatternProviderMenu;
 import lu.kolja.expandedae.definition.ExpSettings;
 import lu.kolja.expandedae.enums.BlockingMode;
 import lu.kolja.expandedae.helper.misc.KeybindUtil;
 import lu.kolja.expandedae.helper.pattern.IPatternProvider;
 import lu.kolja.expandedae.helper.pattern.IUpgradableMenu;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.level.ItemLike;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -28,12 +27,21 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.level.ItemLike;
+
 import java.util.Arrays;
 
 @Mixin(value = PatternProviderMenu.class, remap = false)
 public abstract class MixinPatternProviderMenu extends AEBaseMenu implements IUpgradableMenu, IPatternProvider {
     @Unique
     private static final int BASE_FACTOR = 2;
+
+    // Round 18: typed client-action key + explicit StreamCodec (AE2 26.1.x API).
+    @Unique
+    private static final ClientActionKey<Boolean> EAE$ACTION_MODIFY_PATTERNS =
+            new ClientActionKey<>("expandedae:modifyPatterns");
 
     @Final
     @Shadow(remap = false)
@@ -58,13 +66,13 @@ public abstract class MixinPatternProviderMenu extends AEBaseMenu implements IUp
     private void initToolbox(MenuType<?> menuType, int id, Inventory playerInventory, PatternProviderLogicHost host, CallbackInfo ci) {
         this.eae_$toolbox = new ToolboxMenu(this);
         this.setupUpgrades(((IUpgradeableObject) host).getUpgrades());
-        this.registerClientAction("modifyPatterns", Boolean.class, this::expandedae$modifyPatterns);
+        this.registerClientAction(EAE$ACTION_MODIFY_PATTERNS, ByteBufCodecs.BOOL, this::expandedae$modifyPatterns);
     }
 
     @Unique
     @Override
     public void expandedae$modifyPatterns(boolean rightClick) {
-        if (this.isClientSide()) this.sendClientAction("modifyPatterns", rightClick);
+        if (this.isClientSide()) this.sendClientAction(EAE$ACTION_MODIFY_PATTERNS, rightClick);
         else {
             for (var slot : this.getSlots(SlotSemantics.ENCODED_PATTERN)) {
                 var stack = slot.getItem();

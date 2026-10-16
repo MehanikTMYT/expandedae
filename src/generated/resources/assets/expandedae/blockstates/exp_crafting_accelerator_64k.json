@@ -4,7 +4,8 @@
       "model": "expandedae:block/crafting/exp_crafting_accelerator_64k"
     },
     "formed=true": {
-      "model": "expandedae:block/crafting/exp_crafting_accelerator_64k_formed"
+      "type": "expandedae:exp_crafting_cube",
+      "unit_type": "tier_64k"
     }
   }
 }

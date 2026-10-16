@@ -8,12 +8,8 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "A": {
-      "item": "expandedae:greater_accel_card"
-    },
-    "I": {
-      "item": "extendedae:ex_io_port"
-    }
+    "A": "expandedae:greater_accel_card",
+    "I": "extendedae:ex_io_port"
   },
   "pattern": [
     "AAA",
@@ -21,7 +17,6 @@
     "AAA"
   ],
   "result": {
-    "count": 1,
     "id": "expandedae:exp_io_port"
   }
 }

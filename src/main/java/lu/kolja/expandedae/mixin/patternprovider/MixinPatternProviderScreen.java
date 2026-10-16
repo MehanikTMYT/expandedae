@@ -17,14 +17,15 @@ import lu.kolja.expandedae.enums.BlockingMode;
 import lu.kolja.expandedae.helper.pattern.IPatternProvider;
 import lu.kolja.expandedae.helper.pattern.ISmartBlocking;
 import lu.kolja.expandedae.helper.pattern.IUpgradableMenu;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Inventory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
 
 import java.util.ArrayList;
 import java.util.List;

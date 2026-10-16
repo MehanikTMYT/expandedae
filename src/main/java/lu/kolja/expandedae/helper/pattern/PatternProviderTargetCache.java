@@ -14,7 +14,7 @@ import appeng.util.ConfigManager;
 import lu.kolja.expandedae.definition.ExpSettings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +27,7 @@ import java.util.Set;
  * Most code is borrowed from ae2
  */
 public class PatternProviderTargetCache {
-    private final ResourceLocation programmedCircuit = ResourceLocation.fromNamespaceAndPath("gtceu", "programmed_circuit");
+    private final Identifier programmedCircuit = Identifier.fromNamespaceAndPath("gtceu", "programmed_circuit");
 
     private final BlockCapabilityCache<MEStorage, Direction> cache;
     private final IActionSource src;

@@ -6,7 +6,9 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.data.loot.LootTableProvider;
 import net.minecraft.resources.ResourceKey;
+import appeng.core.definitions.BlockDefinition;
 import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
@@ -30,10 +32,11 @@ public class ExpLootProvider extends LootTableProvider {
             super(Set.of(), FeatureFlags.DEFAULT_FLAGS, registries);
         }
 
+        // Round 18: BlockLootSubProvider#map is private now; the base class already drives
+        // generate() and writes the collected tables itself, provided getKnownBlocks() is correct.
         @Override
-        public void generate(@NotNull BiConsumer<ResourceKey<LootTable>, LootTable.Builder> writer) {
-            generate();
-            map.forEach(writer);
+        protected Iterable<Block> getKnownBlocks() {
+            return ExpBlocks.getBlocks().stream().map(BlockDefinition::block).map(b -> (Block) b).toList();
         }
 
         @Override

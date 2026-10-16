@@ -1,10 +1,4 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "expandedae:not_loaded",
-      "modid": "megacells"
-    }
-  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_engineering_processor": {

@@ -7,7 +7,7 @@
 		"2": "expandedae:block/teto/left_boot",
 		"3": "expandedae:block/teto/right_boot",
 		"4": "expandedae:block/teto/dress",
-		"5": "block/hair_addons",
+		"5": "expandedae:block/teto/hair_addons",
 		"particle": "expandedae:block/teto/head"
 	},
 	"elements": [

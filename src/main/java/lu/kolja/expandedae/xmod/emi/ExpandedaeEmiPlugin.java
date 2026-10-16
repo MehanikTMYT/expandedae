@@ -1,6 +1,6 @@
 package lu.kolja.expandedae.xmod.emi;
 
-import appeng.integration.modules.emi.EmiEncodePatternHandler;
+import appeng.client.integrations.emi.EmiEncodePatternHandler;
 import dev.emi.emi.api.EmiEntrypoint;
 import dev.emi.emi.api.EmiPlugin;
 import dev.emi.emi.api.EmiRegistry;

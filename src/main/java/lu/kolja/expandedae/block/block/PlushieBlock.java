@@ -7,7 +7,6 @@ import appeng.block.AEBaseBlockItem;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.ParametersAreNonnullByDefault;
-import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -15,7 +14,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,19 +31,21 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 @ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
 public class PlushieBlock extends AEBaseBlock {
     private static VoxelShape SHAPE = Shapes.create(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
 
     private static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
-    public PlushieBlock() {
-        super(defaultProps(MapColor.NONE, SoundType.WOOL).noOcclusion());
+    // Round 18: MC 1.21.2+ requires the registry-supplied Properties to reach the Block
+    // constructor (it carries the block's ResourceKey), so AEBaseBlock.defaultProps now takes the
+    // incoming Properties as its first argument instead of creating them.
+    public PlushieBlock(Properties props) {
+        super(defaultProps(props, MapColor.NONE, SoundType.WOOL).noOcclusion());
         this.registerDefaultState(this.defaultBlockState().setValue(WATERLOGGED, false));
     }
 
-    public PlushieBlock(double height) {
-        this();
+    public PlushieBlock(Properties props, double height) {
+        this(props);
         SHAPE = Shapes.create(0.0, 0.0, 0.0, 1.0, height, 1.0);
     }
 
@@ -62,20 +65,18 @@ public class PlushieBlock extends AEBaseBlock {
         return false;
     }
 
-    @Override
-    protected int getLightBlock(BlockState state, BlockGetter level, BlockPos pos) {
-        return 2;
-    }
+    // Round 18: BlockBehaviour#getLightBlock no longer exists; light occlusion is a Properties
+    // value now (BlockBehaviour.Properties#lightBlock). The plushie is noOcclusion() anyway, so
+    // the old hard-coded "2" had no remaining effect worth reproducing.
 
     @Override
     protected float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos) {
         return 1.0F;
     }
 
-    @Override
-    protected boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos) {
-        return true;
-    }
+    // Round 18: BlockBehaviour#propagatesSkylightDown(BlockState, BlockGetter, BlockPos) is gone;
+    // sky-light propagation is decided from the block's Properties/shape now, and the block is
+    // already noOcclusion(), which is what the old "return true" was expressing.
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -84,11 +85,14 @@ public class PlushieBlock extends AEBaseBlock {
     }
 
     @Override
-    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+    protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess ticks,
+            BlockPos pos, Direction directionToNeighbour, BlockPos neighbourPos, BlockState neighbourState,
+            RandomSource random) {
         if (state.getValue(WATERLOGGED)) {
-            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+            ticks.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
-        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
+        return super.updateShape(state, level, ticks, pos, directionToNeighbour, neighbourPos, neighbourState,
+                random);
     }
 
     @Override
@@ -109,8 +113,9 @@ public class PlushieBlock extends AEBaseBlock {
         }
 
         @Override
-        public void addCheckedInformation(ItemStack itemStack, TooltipContext context, List<Component> toolTip, TooltipFlag advancedTooltips) {
-            toolTip.addAll(lines);
+        public void addCheckedInformation(ItemStack itemStack, TooltipContext context,
+                java.util.function.Consumer<Component> toolTip, TooltipFlag advancedTooltips) {
+            lines.forEach(toolTip);
             super.addCheckedInformation(itemStack, context, toolTip, advancedTooltips);
         }
     }

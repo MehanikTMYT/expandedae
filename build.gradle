@@ -1,24 +1,9 @@
-buildscript {
-    repositories {
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-    }
-}
-
 plugins {
+    id 'java-library'
     id 'eclipse'
     id 'idea'
-    id 'net.neoforged.moddev' version '2.0.88'
-    id 'io.freefair.lombok' version '8.13.1'
-    id 'dev.vfyjxf.modaccessor' version '1.2.1'
-}
-
-modAccessor {
-    createTransformConfiguration(configurations.compileOnly)
-    accessTransformerFiles = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+    id 'net.neoforged.moddev'
+    id 'io.freefair.lombok' version '9.0.0'
 }
 
 group = mod_group_id
@@ -28,208 +13,118 @@ base {
     archivesName = mod_id
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 neoForge {
-    // Specify the version of NeoForge to use.
     version = project.neo_version
 
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
     }
 
     runs {
-        guide {
-            client()
-            systemProperty 'guideme.ae2.guide.sources', file('run/resourcepacks/temp/assets/expandedae/ae2guide').absolutePath
-            // This is only needed if you are developing an addon and it should be your mod id
-            systemProperty "guideme.ae2.guide.sourcesNamespace", "expandedae"
-            systemProperty('guideme.showOnStartup', 'ae2:index.md') // Start at index.md
-        }
-
         client {
             client()
-            //jvmArgument("-XX:+AllowEnhancedClassRedefinition")
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-
         server {
             server()
             programArgument '--nogui'
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-
-
         gameTestServer {
             type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            // Round 18: also enable AE2's GameTest namespace so that any AE2 test instances present
+            // on the runtime classpath run inside the ExpandedAE dev environment. NOTE (measured):
+            // AE2's 85 test plots live in AE2's *test* source set and are therefore NOT in the
+            // published appliedenergistics2 jar, so only the 1 vanilla/NeoForge test instance is
+            // discovered here. Kept because it costs nothing and will pick up AE2 tests
+            // automatically if they are ever shipped in the main artifact.
+            systemProperty 'neoforge.enabledGameTestNamespaces', "ae2,${project.mod_id}"
         }
-        data {
-            data()
-
-            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
-            // gameDirectory = project.file('run-data')
-
-            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        clientData {
+            clientData()
+            programArguments.addAll '--mod', project.mod_id, '--all',
+                    '--output', file('src/generated/resources/').getAbsolutePath(),
+                    '--existing', file('src/main/resources/').getAbsolutePath()
         }
-
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             logLevel = org.slf4j.event.Level.DEBUG
         }
     }
-    mods {
-        // define mod <-> source bindings
-        // these are used to tell the game which sources are for which mod
-        // mostly optional in a single mod project
-        // but multi mod projects should define one per mod
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
-        }
-    }
-}
-
-configurations {
-    runtimeClasspath.extendsFrom localRuntime
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
-repositories {
-    mavenLocal()
-    maven {
-        url "https://cursemaven.com"
-        content {
-            includeGroup "curse.maven"
-        }
-    }
-    maven {
-        name = "TerraformersMC"
-        url = "https://maven.terraformersmc.com/"
-    }
-    maven {
-        url = uri("https://modmaven.dev/")
-        content {
-            includeGroup "appeng"
-            includeGroup "de.mari_023"
-        }
-    }
-    maven { // Registrate
-        url "https://maven.tterrag.com/"
-    }
-    maven {
-        name = "Illusive Soulworks maven"
-        url = "https://maven.theillusivec4.top/"
-    }
-    maven {
-        name "firstdarkdev"
-        url "https://maven.firstdarkdev.xyz/snapshots"
-    }
-    maven {
-        name = "Jared's maven"
-        url = "https://maven.blamejared.com/"
-    }
+// ---------------------------------------------------------------------------
+// Round 16: integrations whose dependency has NO proven 26.1.2 artifact.
+// Excluded from compilation rather than stubbed (brief section 12).
+// ---------------------------------------------------------------------------
+sourceSets.main.java {
+    exclude 'lu/kolja/expandedae/xmod/megacells/**'          // MEGA Cells: no 26.1.2 artifact
 }
 
 dependencies {
-    //implementation "curse.maven:applied-energistics-2-223794:6488853"
-    accessCompileOnly("org.appliedenergistics:appliedenergistics2:19.2.10")
-    implementation "org.appliedenergistics:appliedenergistics2:19.2.10"
-    implementation "curse.maven:ex-pattern-provider-892005:6505209"
-    implementation "curse.maven:glodium-957920:5821676"
-    implementation "curse.maven:guideme-1173950:6488254"
-    implementation "curse.maven:advancedae-1084104:6225993"
+    // --- core AE2 stack -----------------------------------------------------
+    implementation "org.appliedenergistics:appliedenergistics2:${ae2_version}"
+    implementation "org.appliedenergistics:guideme:${guideme_version}"
 
-    jarJar(implementation "de.mari_023:ae2wtlib_api:$ae2wtlib_version")
-    runtimeOnly "de.mari_023:ae2wtlib:$ae2wtlib_version"
-    compileOnly "de.mari_023:ae2wtlib:$ae2wtlib_version"
-    runtimeOnly "curse.maven:appliede-1009940:6500056"
-    runtimeOnly "curse.maven:projecte-226410:6611984"
+    // --- AE2WTLib (REQUIRED per neoforge.mods.toml) -------------------------
+    jarJar(implementation("de.mari_023:ae2wtlib_api:${ae2wtlib_version}") { transitive = false })
+    compileOnly("de.mari_023:ae2wtlib:${ae2wtlib_version}") { transitive = false }
+    runtimeOnly("de.mari_023:ae2wtlib:${ae2wtlib_version}") { transitive = false }
 
-    //implementation "curse.maven:applied-energistics-2-wireless-terminals-459929:6437277"
-    implementation "curse.maven:architectury-api-419699:5786327"
-    implementation "curse.maven:curios-309927:6401872"
+    // --- glodblock ecosystem -------------------------------------------------
+    implementation "io.github.glodblock:Glodium:${glodium_version}"
+    implementation "curse.maven:ex-pattern-provider-892005:${ex_pattern_file_id}"   // ExtendedAE
+    // AppliedFlux. Split into compileOnly + gated runtimeOnly so that BOTH branches of
+    // MixinPlugin can actually be startup-tested (Round 18): with AppliedFlux present the plugin
+    // selects compat.appflux.AppFluxMixinPatternProvider{Logic,Menu,Screen} and *disables* the
+    // patternprovider.* trio; without it the reverse. `-PnoAppFlux` runs the second configuration.
+    compileOnly "curse.maven:applied-flux-965012:${applied_flux_file_id}"
+    if (!project.hasProperty('noAppFlux')) {
+        runtimeOnly "curse.maven:applied-flux-965012:${applied_flux_file_id}"
+    }
 
-    implementation "curse.maven:applied-flux-965012:6649565"
-    runtimeOnly "curse.maven:geckolib-388172:6304958"
-    implementation "curse.maven:mega-cells-622112:6517566"
-    runtimeOnly "curse.maven:cloth-config-348521:5729127"
-    //Cell implementations
-    //compileOnly "curse.maven:ars-energistique-905641:6203425"
-    //implementation "curse.maven:applied-experienced-1157608:6616730"
-    //implementation "curse.maven:applied-mekanistics-574300:5978711"
+    // --- AdvancedAE ----------------------------------------------------------
+    implementation "curse.maven:advancedae-1084104:${advancedae_file_id}"
+    // Round 18: AdvancedAE hard-requires geckolib; without it FML aborts before mod loading, which
+    // would make every runtime gate (datagen / dedicated server / client) impossible to run.
+    runtimeOnly "com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
 
-    //play testing
-    runtimeOnly "curse.maven:soulplied-energistics-1143614:6083831"
-    runtimeOnly "curse.maven:industrial-foregoing-souls-904394:6235883"
-    runtimeOnly "curse.maven:titanium-287342:6443608"
-    runtimeOnly "curse.maven:industrial-foregoing-266515:6502376"
-    runtimeOnly "curse.maven:mekanism-268560:6486993"
-
-    runtimeOnly "curse.maven:enderdrives-1226739:6482292"
-    implementation "curse.maven:bigger-ae2-1013772:6587078"
-
+    // --- item list mod (API only at compile time) ---------------------------
+    // Fleet policy: EMI only (JEI integration removed). Built locally into mavenLocal.
     compileOnly "dev.emi:emi-neoforge:${emi_version}:api"
-    //runtimeOnly "dev.emi:emi-neoforge:${emi_version}"
-    runtimeOnly "curse.maven:jade-324717:6667790"
-
-    compileOnly("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
-    compileOnly("mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}")
-    runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
-    implementation "curse.maven:ae2-jei-integration-1074338:5748513"
-}
-
-var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
-    var replaceProperties = [minecraft_version      : minecraft_version,
-                             minecraft_version_range: minecraft_version_range,
-                             neo_version            : neo_version,
-                             neo_version_range      : neo_version_range,
-                             loader_version_range   : loader_version_range,
-                             mod_id                 : mod_id,
-                             mod_name               : mod_name,
-                             mod_license            : mod_license,
-                             mod_version            : mod_version,
-                             mod_authors            : mod_authors,
-                             mod_description        : mod_description]
-    inputs.properties replaceProperties
-    expand replaceProperties
-    from "src/main/templates"
-    into "build/generated/sources/modMetadata"
+    runtimeOnly "dev.emi:emi-neoforge:${emi_version}"
 }
 
 tasks.withType(ProcessResources).configureEach {
     var replaceProperties = [
-            minecraft_version   : minecraft_version, minecraft_version_range: minecraft_version_range,
-            neoforge_version         : neo_version, neoforge_version_range: neo_version_range,
+            minecraft_version   : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neoforge_version    : neo_version,
+            neoforge_version_range: neo_version_range,
             loader_version_range: loader_version_range,
-            mod_id              : mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
-            mod_authors         : mod_authors, mod_description: mod_description,
+            mod_id              : mod_id, mod_name: mod_name, mod_license: mod_license,
+            mod_version         : mod_version, mod_authors: mod_authors,
+            mod_description     : mod_description,
+            ae2_version_range   : ae2_version_range,
     ]
     inputs.properties replaceProperties
-
     filesMatching(['META-INF/neoforge.mods.toml']) {
         expand replaceProperties
     }
 }
 
-sourceSets.main.resources.srcDir generateModMetadata
-neoForge.ideSyncTask generateModMetadata
-
-tasks.withType(Jar).configureEach {
-    destinationDirectory.set(file("$rootDir/jar"))
-}
-
-idea {
-    module {
-        downloadSources = true
-        downloadJavadoc = true
-    }
+// Round 18: javac's default cap of 100 diagnostics hid a whole second layer of errors behind
+// the first wave of "cannot find symbol". Raise it so error counts in the port report are honest.
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.addAll(['-Xmaxerrs', '9999'])
 }
 
 tasks.withType(Copy).configureEach {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
-
-//tasks.runClient.dependsOn(tasks.runData)

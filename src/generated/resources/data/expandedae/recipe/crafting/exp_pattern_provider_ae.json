@@ -8,15 +8,9 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "C": {
-      "item": "ae2:capacity_card"
-    },
-    "E": {
-      "item": "ae2:engineering_processor"
-    },
-    "P": {
-      "item": "ae2:pattern_provider"
-    }
+    "C": "ae2:capacity_card",
+    "E": "ae2:engineering_processor",
+    "P": "ae2:pattern_provider"
   },
   "pattern": [
     "ECE",
@@ -24,7 +18,6 @@
     "ECE"
   ],
   "result": {
-    "count": 1,
     "id": "expandedae:exp_pattern_provider"
   }
 }

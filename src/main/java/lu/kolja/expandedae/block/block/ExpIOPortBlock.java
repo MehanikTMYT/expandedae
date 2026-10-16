@@ -19,8 +19,8 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 public class ExpIOPortBlock extends ExpBlockBaseScreen<ExpIOPortBlockEntity> {
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
 
-    public ExpIOPortBlock() {
-        super(metalProps());
+    public ExpIOPortBlock(Properties props) {
+        super(metalProps(props));
         this.registerDefaultState(this.defaultBlockState().setValue(POWERED, false));
     }
 
@@ -30,7 +30,9 @@ public class ExpIOPortBlock extends ExpBlockBaseScreen<ExpIOPortBlockEntity> {
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block blockIn,
+            @org.jetbrains.annotations.Nullable net.minecraft.world.level.redstone.Orientation orientation,
+            boolean movedByPiston) {
         ExpIOPortBlockEntity be = this.getBlockEntity(level, pos);
         if (be != null) be.updateRedstoneState();
     }

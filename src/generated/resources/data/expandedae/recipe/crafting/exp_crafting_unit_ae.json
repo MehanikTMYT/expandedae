@@ -1,25 +1,11 @@
 {
-  "neoforge:conditions": [
-    {
-      "type": "expandedae:not_loaded",
-      "modid": "megacells"
-    }
-  ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "C": {
-      "item": "ae2:fluix_smart_dense_cable"
-    },
-    "L": {
-      "item": "ae2:logic_processor"
-    },
-    "P": {
-      "item": "ae2:engineering_processor"
-    },
-    "U": {
-      "item": "ae2:crafting_unit"
-    }
+    "C": "ae2:fluix_smart_dense_cable",
+    "L": "ae2:logic_processor",
+    "P": "ae2:engineering_processor",
+    "U": "ae2:crafting_unit"
   },
   "pattern": [
     "UPU",
@@ -27,7 +13,6 @@
     "UPU"
   ],
   "result": {
-    "count": 1,
     "id": "expandedae:exp_crafting_unit"
   }
 }

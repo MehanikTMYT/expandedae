@@ -3,8 +3,6 @@ package lu.kolja.expandedae.datagen;
 import appeng.api.util.AEColor;
 import appeng.core.definitions.AEBlocks;
 import com.glodblock.github.extendedae.common.EAESingletons;
-import gripe._90.megacells.definition.MEGABlocks;
-import gripe._90.megacells.definition.MEGAItems;
 import lu.kolja.expandedae.Expandedae;
 import lu.kolja.expandedae.datagen.conditionals.ModNotLoadedCondition;
 import lu.kolja.expandedae.definition.ExpBlocks;
@@ -13,12 +11,8 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
-import net.minecraft.data.recipes.ShapedRecipeBuilder;
-import net.minecraft.data.recipes.ShapelessRecipeBuilder;
-import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.common.conditions.ICondition;
 import net.neoforged.neoforge.common.conditions.ModLoadedCondition;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -33,14 +27,22 @@ import static lu.kolja.expandedae.definition.ExpItems.*;
 import static lu.kolja.expandedae.enums.ExpTiers.*;
 import static net.minecraft.data.recipes.RecipeCategory.MISC;
 
+/**
+ * Round 18: {@code RecipeProvider} is now constructed with
+ * {@code (HolderLookup.Provider, RecipeOutput)}, exposes {@code shaped(...)}/{@code shapeless(...)}
+ * as instance methods (the standalone {@code ShapedRecipeBuilder}/{@code ShapelessRecipeBuilder}
+ * entry points are gone), takes recipe ids as {@code String}, and is driven by a
+ * {@code RecipeProvider.Runner} rather than being added to the DataGenerator directly.
+ */
 public class ExpRecipeProvider extends RecipeProvider {
-    public ExpRecipeProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
-        super(output, registries);
+    public ExpRecipeProvider(HolderLookup.Provider registries, RecipeOutput output) {
+        super(registries, output);
     }
 
     @Override
-    protected void buildRecipes(@NotNull RecipeOutput out) {
-        ShapedRecipeBuilder.shaped(MISC, EXP_PATTERN_PROVIDER)
+    protected void buildRecipes() {
+        var out = this.output;
+        shaped(MISC, EXP_PATTERN_PROVIDER)
                 .pattern("ECE")
                 .pattern("CPC")
                 .pattern("ECE")
@@ -50,7 +52,7 @@ public class ExpRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_engineering_processor", has(ENGINEERING_PROCESSOR))
                 .unlockedBy("has_pattern_provider", has(PATTERN_PROVIDER))
                 .save(conditional(out, notLoaded("extendedae")), craftingId("exp_pattern_provider_ae"));
-        ShapedRecipeBuilder.shaped(MISC, EXP_PATTERN_PROVIDER)
+        shaped(MISC, EXP_PATTERN_PROVIDER)
                 .pattern("CE")
                 .pattern("EC")
                 .define('E', EAESingletons.EX_PATTERN_PROVIDER)
@@ -58,16 +60,16 @@ public class ExpRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_concurrent_processor", has(EAESingletons.CONCURRENT_PROCESSOR))
                 .save(conditional(out, loaded("extendedae")), craftingId("exp_pattern_provider_ext"));
 
-        ShapelessRecipeBuilder.shapeless(MISC, EXP_PATTERN_PROVIDER)
+        shapeless(MISC, EXP_PATTERN_PROVIDER)
                 .requires(EXP_PATTERN_PROVIDER_PART)
                 .unlockedBy("has_exp_pattern_provider_part", has(EXP_PATTERN_PROVIDER_PART))
                 .save(out, craftingId("exp_pattern_provider_alt"));
-        ShapelessRecipeBuilder.shapeless(MISC, EXP_PATTERN_PROVIDER_PART)
+        shapeless(MISC, EXP_PATTERN_PROVIDER_PART)
                 .requires(EXP_PATTERN_PROVIDER)
                 .unlockedBy("has_exp_pattern_provider", has(EXP_PATTERN_PROVIDER))
                 .save(out, craftingId("exp_pattern_provider_part"));
 
-        ShapedRecipeBuilder.shaped(MISC, EXP_PATTERN_PROVIDER_UPGRADE)
+        shaped(MISC, EXP_PATTERN_PROVIDER_UPGRADE)
                 .pattern("ECE")
                 .pattern("C C")
                 .pattern("ECE")
@@ -76,7 +78,7 @@ public class ExpRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_engineering_processor", has(ENGINEERING_PROCESSOR))
                 .unlockedBy("has_capacity_card", has(CAPACITY_CARD))
                 .save(conditional(out, notLoaded("extendedae")), craftingId("exp_pattern_provider_upgrade_ae"));
-        ShapedRecipeBuilder.shaped(MISC, EXP_PATTERN_PROVIDER_UPGRADE)
+        shaped(MISC, EXP_PATTERN_PROVIDER_UPGRADE)
                 .pattern("CE")
                 .pattern("E ")
                 .define('E', EAESingletons.EX_PATTERN_PROVIDER)
@@ -85,14 +87,14 @@ public class ExpRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_exp_pattern_provider", has(EAESingletons.EX_PATTERN_PROVIDER))
                 .save(conditional(out, loaded("extendedae")), craftingId("exp_pattern_provider_upgrade_ext"));
 
-        ShapelessRecipeBuilder.shapeless(MISC, AUTO_COMPLETE_CARD)
+        shapeless(MISC, AUTO_COMPLETE_CARD)
                 .requires(ADVANCED_CARD)
                 .requires(CRAFTING_CARD)
                 .unlockedBy("has_advanced_card", has(ADVANCED_CARD))
                 .unlockedBy("has_crafting_card", has(CRAFTING_CARD))
                 .save(out, craftingId("auto_complete_card"));
 
-        ShapedRecipeBuilder.shaped(MISC, PATTERN_REFILLER_CARD)
+        shaped(MISC, PATTERN_REFILLER_CARD)
                 .pattern("AB")
                 .pattern("BE")
                 .define('A', ADVANCED_CARD)
@@ -102,7 +104,7 @@ public class ExpRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_engineering_processor", has(ENGINEERING_PROCESSOR))
                 .save(out, craftingId("pattern_refiller_card"));
 
-        ShapedRecipeBuilder.shaped(MISC, EXP_ENCODING_TERMINAL)
+        shaped(MISC, EXP_ENCODING_TERMINAL)
                 .pattern("TC")
                 .pattern("L ")
                 .define('T', PATTERN_ENCODING_TERMINAL)
@@ -112,7 +114,7 @@ public class ExpRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_logic_processor", has(LOGIC_PROCESSOR))
                 .save(out, craftingId("exp_encoding_terminal"));
 
-        ShapedRecipeBuilder.shaped(MISC, ExpBlocks.EXP_IO_PORT)
+        shaped(MISC, ExpBlocks.EXP_IO_PORT)
                 .pattern("AAA")
                 .pattern("AIA")
                 .pattern("AAA")
@@ -120,7 +122,7 @@ public class ExpRecipeProvider extends RecipeProvider {
                 .define('I', AEBlocks.IO_PORT)
                 .unlockedBy("has_speed_card", has(GREATER_ACCEL_CARD))
                 .save(conditional(out, notLoaded("extendedae")), craftingId("exp_io_port_ae"));
-        ShapedRecipeBuilder.shaped(MISC, ExpBlocks.EXP_IO_PORT)
+        shaped(MISC, ExpBlocks.EXP_IO_PORT)
                 .pattern("AAA")
                 .pattern("AIA")
                 .pattern("AAA")
@@ -129,7 +131,7 @@ public class ExpRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_speed_card", has(GREATER_ACCEL_CARD))
                 .save(conditional(out, loaded("extendedae")), craftingId("exp_io_port_ext"));
 
-        ShapedRecipeBuilder.shaped(MISC, GREATER_ACCEL_CARD)
+        shaped(MISC, GREATER_ACCEL_CARD)
                 .pattern("AAA")
                 .pattern("ACA")
                 .pattern("AAA")
@@ -139,7 +141,7 @@ public class ExpRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_calculation_processor", has(CALCULATION_PROCESSOR))
                 .save(out, craftingId("greater_accel_card"));
 
-        ShapedRecipeBuilder.shaped(MISC, UNIT)
+        shaped(MISC, UNIT)
                 .pattern("UPU")
                 .pattern("CLC")
                 .pattern("UPU")
@@ -149,21 +151,18 @@ public class ExpRecipeProvider extends RecipeProvider {
                 .define('L', LOGIC_PROCESSOR)
                 .unlockedBy("has_engineering_processor", has(ENGINEERING_PROCESSOR))
                 .unlockedBy("has_logic_processor", has(LOGIC_PROCESSOR))
-                .save(conditional(out, notLoaded("megacells")), craftingId("exp_crafting_unit_ae"));
+                .save(out, craftingId("exp_crafting_unit_ae"));
 
-        ShapedRecipeBuilder.shaped(MISC, UNIT)
-                .pattern("UPU")
-                .pattern("CLC")
-                .pattern("UPU")
-                .define('U', MEGABlocks.MEGA_CRAFTING_UNIT)
-                .define('P', ENGINEERING_PROCESSOR)
-                .define('C', SMART_DENSE_CABLE.item(AEColor.TRANSPARENT))
-                .define('L', MEGAItems.ACCUMULATION_PROCESSOR)
-                .unlockedBy("has_engineering_processor", has(ENGINEERING_PROCESSOR))
-                .unlockedBy("has_logic_processor", has(MEGAItems.ACCUMULATION_PROCESSOR))
-                .save(conditional(out, loaded("megacells")), craftingId("exp_crafting_unit_mega"));
+        // Round 18: the MEGA-Cells variant of this recipe ("exp_crafting_unit_mega", gated on
+        // ModLoadedCondition("megacells")) is removed while MEGA Cells has no 26.1.2 artifact.
+        // 62832/MEGACells has a `26.1` branch but its newest release is still 4.11.0 (1.21.x) and
+        // modmaven serves no gripe._90:megacells metadata, so the definition classes it referenced
+        // (MEGABlocks.MEGA_CRAFTING_UNIT, MEGAItems.ACCUMULATION_PROCESSOR) do not exist on any
+        // classpath we can build against. The plain AE2 recipe above is therefore unconditional
+        // rather than gated on notLoaded("megacells"). Restore both branches verbatim when a
+        // 26.1.2 MEGA Cells artifact is published.
 
-        ShapelessRecipeBuilder.shapeless(MISC, TIER_2.getDefinition())
+        shapeless(MISC, TIER_2.getDefinition())
                 .requires(UNIT)
                 .requires(ENGINEERING_PROCESSOR)
                 .unlockedBy("has_engineering_processor", has(ENGINEERING_PROCESSOR))
@@ -190,12 +189,12 @@ public class ExpRecipeProvider extends RecipeProvider {
         upgrade(out, TIER_512K, TIER_1M);
     }
 
-    private ResourceLocation craftingId(String name) {
-        return Expandedae.makeId("crafting/" + name);
+    private String craftingId(String name) {
+        return Expandedae.makeId("crafting/" + name).toString();
     }
 
     private void upgrade(RecipeOutput out, ExpTiers previousTier, ExpTiers tier) {
-        ShapelessRecipeBuilder.shapeless(MISC, tier.getDefinition())
+        shapeless(MISC, tier.getDefinition())
                 .requires(previousTier.getDefinition(), 2)
                 .unlockedBy("has_calculation_processor", has(CALCULATION_PROCESSOR))
                 .save(out, craftingId(tier.getCpuAffix()));
@@ -210,5 +209,22 @@ public class ExpRecipeProvider extends RecipeProvider {
     }
     private static ICondition notLoaded(String mod) {
         return new ModNotLoadedCondition(mod);
+    }
+
+    /** Round 18: DataGenerator entry point for the provider above. */
+    public static final class Runner extends RecipeProvider.Runner {
+        public Runner(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> registries) {
+            super(packOutput, registries);
+        }
+
+        @Override
+        protected RecipeProvider createRecipeProvider(HolderLookup.Provider registries, RecipeOutput output) {
+            return new ExpRecipeProvider(registries, output);
+        }
+
+        @Override
+        public String getName() {
+            return "ExpandedAE Recipes";
+        }
     }
 }

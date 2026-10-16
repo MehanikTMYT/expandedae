@@ -17,14 +17,17 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 public class ExpBlocks {
     public static final DeferredRegister.Blocks DR = DeferredRegister.createBlocks(Expandedae.MODID);
@@ -55,14 +58,14 @@ public class ExpBlocks {
     public static final BlockDefinition<PlushieBlock> TETO = block(
             "Teto",
             "teto",
-            () -> new PlushieBlock(2D),
+            props -> new PlushieBlock(props, 2D),
             (b, p) -> new PlushieBlock.PlushieBlockItem(b, p, List.of(Component.literal("§cTeto!!")))
     );
 
     public static BlockDefinition<CraftingUnitBlock> UNIT = block(
             "Expanded Crafting Unit",
             "exp_crafting_unit",
-            () -> new CraftingUnitBlock(ExpTiers.UNIT),
+            props -> new CraftingUnitBlock(props, ExpTiers.UNIT),
             AEBaseBlockItem::new
     );
 
@@ -172,7 +175,7 @@ public class ExpBlocks {
     ) {
         return block(
                 englishName, id,
-                () -> new CraftingUnitBlock(cpu),
+                props -> new CraftingUnitBlock(props, cpu),
                 (a, b) -> new ExpCPUItem(a, b, AEItems.ADVANCED_CARD) //TODO: FIX ITEM SYSTEM
         );
     }
@@ -181,13 +184,21 @@ public class ExpBlocks {
         return Collections.unmodifiableList(BLOCKS);
     }
 
+    // Round 18: MC 1.21.2+ registration model. Blocks/items must receive the registry-created
+    // Properties (they carry the ResourceKey), so the factories are Function<Properties, T> and the
+    // BlockItem's Item.Properties needs an explicit setId(...). DeferredRegister.Blocks#registerBlock
+    // wires the block half automatically.
     private static <T extends Block> BlockDefinition<T> block(
             String englishName,
             String id,
-            Supplier<T> blockSupplier,
+            Function<BlockBehaviour.Properties, T> blockSupplier,
             BiFunction<Block, Item.Properties, BlockItem> itemFactory) {
-        var block = DR.register(id, blockSupplier);
-        var item = ExpItems.DR.register(id, () -> itemFactory.apply(block.get(), new Item.Properties()));
+        var block = DR.registerBlock(id, blockSupplier);
+        var item = ExpItems.DR.register(id, () -> itemFactory.apply(
+                block.get(),
+                new Item.Properties()
+                        .setId(ResourceKey.create(Registries.ITEM, Expandedae.makeId(id)))
+                        .useBlockDescriptionPrefix()));
 
         var definition = new BlockDefinition<>(englishName, block, new ItemDefinition<>(englishName, item));
         BLOCKS.add(definition);

@@ -6,12 +6,8 @@
     }
   ],
   "type": "ae2wtlib:combine",
-  "terminalA": {
-    "item": "appliede:wireless_transmutation_terminal"
-  },
-  "terminalB": {
-    "item": "expandedae:wireless_exp_encoding_terminal"
-  },
+  "terminalA": "appliede:wireless_transmutation_terminal",
+  "terminalB": "expandedae:wireless_exp_encoding_terminal",
   "terminalAName": "transmutation",
   "terminalBName": "exp_encoding"
 }

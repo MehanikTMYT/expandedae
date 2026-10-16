@@ -16,7 +16,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -30,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
 public class ExpPatternProviderBlock extends ExpBlockBaseScreen<ExpPatternProviderBlockEntity> {
     private static final EnumProperty<PushDirection> PUSH_DIRECTION = PatternProviderBlock.PUSH_DIRECTION;
 
-    public ExpPatternProviderBlock() {
-        super(AEBaseBlock.metalProps());
+    public ExpPatternProviderBlock(Properties props) {
+        super(AEBaseBlock.metalProps(props));
         registerDefaultState(defaultBlockState().setValue(PUSH_DIRECTION, PushDirection.ALL));
     }
 
@@ -51,8 +50,10 @@ public class ExpPatternProviderBlock extends ExpBlockBaseScreen<ExpPatternProvid
     }
 
     @Override
-    public void neighborChanged(
-            BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+    protected void neighborChanged(
+            BlockState state, Level level, BlockPos pos, Block block,
+            @org.jetbrains.annotations.Nullable net.minecraft.world.level.redstone.Orientation orientation,
+            boolean movedByPiston) {
         var be = getBlockEntity(level, pos);
 
         if (be != null) {
@@ -61,10 +62,10 @@ public class ExpPatternProviderBlock extends ExpBlockBaseScreen<ExpPatternProvid
     }
 
     @Override
-    protected @NotNull ItemInteractionResult useItemOn(ItemStack heldItem, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    protected @NotNull InteractionResult useItemOn(ItemStack heldItem, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (InteractionUtil.canWrenchRotate(heldItem)) {
             this.setSide(level, pos, hit.getDirection());
-            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+            return InteractionResult.SUCCESS;
         } else {
             return super.useItemOn(heldItem, state, level, pos, player, hand, hit);
         }

@@ -40,17 +40,21 @@ public class MixinPlugin implements IMixinConfigPlugin {
                     "lu.kolja.expandedae.mixin.compat.appflux.AppFluxMixinPatternProviderScreen",
                     "lu.kolja.expandedae.mixin.compat.advancedae.AAEAccessorAdvCraftingCPULogic",
                     "lu.kolja.expandedae.mixin.compat.advancedae.AAEAccessorExecutingCraftingJob",
-                    "lu.kolja.expandedae.mixin.compat.advancedae.AAEAccessorExecutingCraftingJob.AAEAccessorTaskProgress",
-                    "lu.kolja.expandedae.mixin.compat.jei.MixinJEIPlugin"
+                    "lu.kolja.expandedae.mixin.compat.advancedae.AAEAccessorExecutingCraftingJob$AAEAccessorTaskProgress"
+                    // Round 18: "lu.kolja.expandedae.mixin.compat.jei.MixinJEIPlugin" removed here and
+                    // from mixins.expandedae.json. tamaized/ae2jeiintegration has no 26.1.2 artifact and
+                    // the mixin source is excluded from the source set (build.gradle), so leaving the
+                    // entry would make the `required: true` config reference a class that is not in the
+                    // jar -> hard mixin config failure at startup.
             },
             new String[]{
                     "appflux",
                     "appflux",
                     "appflux",
-                    "advancedae",
-                    "advancedae",
-                    "advancedae",
-                    "ae2jeiintegration"
+                    // Upstream 6f5a9d1: AdvancedAE's mod id is advanced_ae (with "advancedae" these mixins never loaded).
+                    "advanced_ae",
+                    "advanced_ae",
+                    "advanced_ae"
             }
     );
 

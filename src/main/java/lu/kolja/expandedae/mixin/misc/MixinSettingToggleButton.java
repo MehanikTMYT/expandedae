@@ -3,7 +3,7 @@ package lu.kolja.expandedae.mixin.misc;
 import appeng.api.config.CondenserOutput;
 import appeng.api.config.Setting;
 import appeng.api.config.Settings;
-import appeng.client.gui.Icon;
+import appeng.util.Icon;
 import appeng.client.gui.widgets.SettingToggleButton;
 import appeng.core.localization.ButtonToolTips;
 import net.minecraft.network.chat.Component;
@@ -28,7 +28,12 @@ public class MixinSettingToggleButton {
 
     @Redirect(method = "<init>(Lappeng/api/config/Setting;Ljava/lang/Enum;Ljava/util/function/Predicate;Lappeng/client/gui/widgets/SettingToggleButton$IHandler;)V",
             at = @At(value = "INVOKE",
-                    target = "Lappeng/client/gui/widgets/SettingToggleButton;registerApp(Lappeng/client/gui/Icon;Lappeng/api/config/Setting;Ljava/lang/Enum;Lappeng/core/localization/ButtonToolTips;Lappeng/core/localization/ButtonToolTips;)V",
+                    // Round 18: Icon moved from appeng.client.gui.Icon to appeng.util.Icon, so the
+                    // *descriptor* of the redirected registerApp call changed even though the method
+                    // name and the enclosing constructor did not. javac could never have caught this
+                    // (mixin targets are strings); with "required": true + defaultRequire 1 the stale
+                    // descriptor would have been a hard client-startup failure.
+                    target = "Lappeng/client/gui/widgets/SettingToggleButton;registerApp(Lappeng/util/Icon;Lappeng/api/config/Setting;Ljava/lang/Enum;Lappeng/core/localization/ButtonToolTips;Lappeng/core/localization/ButtonToolTips;)V",
                     ordinal = 0),
             remap = false)
     private <T extends Enum<T>> void register(Icon icon, Setting<T> setting, T val, ButtonToolTips title,

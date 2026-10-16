@@ -7,9 +7,10 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-import java.util.List;
+import java.util.function.Consumer;
 
 public class DummyIntegrationItem extends AEBaseItem {
     private final ADDONS addon;
@@ -21,8 +22,9 @@ public class DummyIntegrationItem extends AEBaseItem {
 
     @ParametersAreNonnullByDefault
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
-        lines.add(addon.getUnavailableTooltip());
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay,
+            Consumer<Component> lines, TooltipFlag flag) {
+        lines.accept(addon.getUnavailableTooltip());
     }
 
     @Override

@@ -11,7 +11,7 @@ import appeng.client.gui.widgets.SettingToggleButton;
 import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEItems;
 import appeng.menu.implementations.IOPortMenu;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -40,7 +40,7 @@ public class ExpIOPortScreen extends UpgradeableScreen<IOPortMenu> {
     }
 
     @Override
-    public void drawBG(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX, int mouseY, float partialTicks) {
+    public void drawBG(GuiGraphicsExtractor guiGraphics, int offsetX, int offsetY, int mouseX, int mouseY, float partialTicks) {
         super.drawBG(guiGraphics, offsetX, offsetY, mouseX, mouseY, partialTicks);
         this.drawItem(guiGraphics, offsetX + 66 - 8, offsetY + 17, AEItems.ITEM_CELL_1K.stack());
         this.drawItem(guiGraphics, offsetX + 94 + 8, offsetY + 17, AEBlocks.DRIVE.stack());

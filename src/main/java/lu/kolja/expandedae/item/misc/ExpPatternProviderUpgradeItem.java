@@ -9,11 +9,14 @@ import lu.kolja.expandedae.definition.ExpBlocks;
 import lu.kolja.expandedae.definition.ExpItems;
 import lu.kolja.expandedae.item.abstracts.UpgradeItem;
 import net.minecraft.ChatFormatting;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -22,7 +25,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.function.Consumer;
 
 public class ExpPatternProviderUpgradeItem extends UpgradeItem {
     public ExpPatternProviderUpgradeItem(Properties pProperties) {
@@ -30,11 +33,12 @@ public class ExpPatternProviderUpgradeItem extends UpgradeItem {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag tooltipFlag) {
-        tooltip.add(Component.translatable("item.expandedae.upgrade.tooltip",
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay,
+            Consumer<Component> tooltip, TooltipFlag tooltipFlag) {
+        tooltip.accept(Component.translatable("item.expandedae.upgrade.tooltip",
                         "a Pattern Provider to an Expanded Pattern Provider")
                 .withStyle(ChatFormatting.GRAY));
-        super.appendHoverText(stack, context, tooltip, tooltipFlag);
+        super.appendHoverText(stack, context, tooltipDisplay, tooltip, tooltipFlag);
     }
 
     @Override
@@ -53,9 +57,11 @@ public class ExpPatternProviderUpgradeItem extends UpgradeItem {
                 if (state == null) {
                     return InteractionResult.PASS;
                 }
-                for (var sp : originState.getValues().entrySet()) {
-                    var pt = sp.getKey();
-                    var va = sp.getValue();
+                // Round 18: BlockState#getValues() now returns Stream<Property.Value<?>> instead of
+                // an ImmutableMap<Property<?>, Comparable<?>>.
+                for (var sp : originState.getValues().toList()) {
+                    var pt = sp.property();
+                    var va = sp.value();
                     try {
                         if (state.hasProperty(pt)) {
                             state = state.<Comparable, Comparable>setValue((Property) pt, va);
@@ -78,20 +84,24 @@ public class ExpPatternProviderUpgradeItem extends UpgradeItem {
                 if (part instanceof AEBasePart basePart
                         && (part.getClass() == PatternProviderPart.class)) {
                     var side = basePart.getSide();
-                    var contents = new CompoundTag();
 
-                    var partItem = ExpItems.EXP_PATTERN_PROVIDER_PART.asItem();
+                    var partItem = ExpItems.EXP_PATTERN_PROVIDER_PART.get();
 
-                    part.writeToNBT(contents, world.registryAccess());
-                    var p = cable.replacePart(partItem, side, context.getPlayer(), null);
+                    // Round 18: IPart persistence is ValueOutput/ValueInput based now.
+                    var output = TagValueOutput.createWithContext(
+                            ProblemReporter.DISCARDING, world.registryAccess());
+                    part.writeToNBT(output);
+                    var contents = output.buildResult();
+                    var p = cable.replacePart(partItem, side, context.getPlayer(), (net.minecraft.world.InteractionHand) null);
                     if (p != null) {
-                        p.readFromNBT(contents, world.registryAccess());
+                        p.readFromNBT(TagValueInput.create(
+                                ProblemReporter.DISCARDING, world.registryAccess(), contents));
                     }
                 } else {
                     return InteractionResult.PASS;
                 }
                 context.getItemInHand().shrink(1);
-                return InteractionResult.sidedSuccess(world.isClientSide);
+                return InteractionResult.SUCCESS;
             }
         }
         return InteractionResult.PASS;

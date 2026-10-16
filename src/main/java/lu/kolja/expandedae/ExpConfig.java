@@ -5,7 +5,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
-@EventBusSubscriber(modid = Expandedae.MODID, bus = EventBusSubscriber.Bus.MOD)
+// Round 18: NeoForge 26.1 collapsed the mod/game bus split, so EventBusSubscriber no
+// longer has a `bus` attribute (only `value` and `modid` remain).
+@EventBusSubscriber(modid = Expandedae.MODID)
 public class ExpConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 

@@ -10,7 +10,7 @@ import lu.kolja.expandedae.definition.*;
 import lu.kolja.expandedae.part.ExpPatternProviderPart;
 import lu.kolja.expandedae.xmod.XMod;
 import lu.kolja.expandedae.xmod.ae2wtlib.WTLibIntegration;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
@@ -48,8 +48,8 @@ public class Expandedae {
     }
 
     @Contract("_ -> new")
-    public static @NotNull ResourceLocation makeId(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MODID, path);
+    public static @NotNull Identifier makeId(String path) {
+        return Identifier.fromNamespaceAndPath(MODID, path);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
@@ -67,10 +67,14 @@ public class Expandedae {
                 ExpBlockEntities.EXP_PATTERN_PROVIDER.get(),
                 (be, context) -> be.getLogic().getReturnInv()
         );
+        // Round 18: NeoForge renamed Capabilities.EnergyStorage -> Capabilities.Energy, and
+        // PoweredItemCapabilities now takes (ItemAccess, Item validItem, IAEItemPowerStorage) -
+        // the same shape AE2 itself uses in InitCapabilityProviders#registerPowerStorageItem.
+        var terminal = (ItemWT) ExpItems.WIRELESS_EXP_ENCODING_TERMINAL.get();
         event.registerItem(
-                Capabilities.EnergyStorage.ITEM,
-                (stack, context) -> new PoweredItemCapabilities(stack, (ItemWT) ExpItems.WIRELESS_EXP_ENCODING_TERMINAL.get()),
-                ExpItems.WIRELESS_EXP_ENCODING_TERMINAL.get()
+                Capabilities.Energy.ITEM,
+                (stack, itemAccess) -> new PoweredItemCapabilities(itemAccess, terminal, terminal),
+                terminal
         );
     }
 

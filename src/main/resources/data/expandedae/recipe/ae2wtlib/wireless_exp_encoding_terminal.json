@@ -12,15 +12,9 @@
     "C"
   ],
   "key": {
-    "R": {
-      "item": "ae2:wireless_receiver"
-    },
-    "E": {
-      "item": "expandedae:exp_encoding_terminal"
-    },
-    "C": {
-      "item": "ae2:dense_energy_cell"
-    }
+    "R": "ae2:wireless_receiver",
+    "E": "expandedae:exp_encoding_terminal",
+    "C": "ae2:dense_energy_cell"
   },
   "result": {
     "id": "expandedae:wireless_exp_encoding_terminal"

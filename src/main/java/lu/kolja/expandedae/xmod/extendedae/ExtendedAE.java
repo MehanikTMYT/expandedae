@@ -8,8 +8,13 @@ import lu.kolja.expandedae.definition.ExpItems;
 
 public class ExtendedAE {
     public ExtendedAE() {
+        // Upstream a2328b0/933bc6b moved these into EAEConfig.tapeWhitelist from a MOD-bus @EventBusSubscriber, because newer
+        // ExtendedAE builds dropped registerPackableDevice. The ExtendedAE build we target on 26.1.2 still has it, and this
+        // class is only constructed when ExtendedAE is loaded (the mod is OPTIONAL), whereas a static subscriber would be
+        // registered unconditionally. Keep the direct call and take upstream's addition of the IO port.
         ItemMEPackingTape.registerPackableDevice(ExpBlocks.EXP_PATTERN_PROVIDER.id());
         ItemMEPackingTape.registerPackableDevice(ExpItems.EXP_PATTERN_PROVIDER_PART.id());
+        ItemMEPackingTape.registerPackableDevice(ExpBlocks.EXP_IO_PORT.id());
 
         Upgrades.add(ExpItems.AUTO_COMPLETE_CARD, EAESingletons.EX_PATTERN_PROVIDER, 1, "group.ex_pattern_provider.name");
         Upgrades.add(ExpItems.AUTO_COMPLETE_CARD, EAESingletons.EX_PATTERN_PROVIDER_PART, 1, "group.ex_pattern_provider.name");

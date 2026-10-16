@@ -18,7 +18,8 @@ public class KeybindUtil {
         return isKeyDown(InputConstants.MOUSE_BUTTON_RIGHT);
     }
     public static boolean isKeyDown(int key) {
-        return InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), key);
+        // Round 18: InputConstants.isKeyDown now takes the Window itself, not the raw GLFW handle.
+        return InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), key);
     }
 
     // Pattern modifying logic

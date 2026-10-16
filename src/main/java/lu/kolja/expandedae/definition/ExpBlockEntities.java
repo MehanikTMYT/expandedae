@@ -9,7 +9,7 @@ import lu.kolja.expandedae.block.entity.ExpIOPortBlockEntity;
 import lu.kolja.expandedae.block.entity.ExpPatternProviderBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 public class ExpBlockEntities {
     public static final DeferredRegister<BlockEntityType<?>> DR =
             DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Expandedae.MODID);
-    private static final Map<ResourceLocation, BlockEntityType<?>> BLOCK_ENTITY_TYPES = new HashMap<>();
+    private static final Map<Identifier, BlockEntityType<?>> BLOCK_ENTITY_TYPES = new HashMap<>();
     public static final Supplier<BlockEntityType<ExpPatternProviderBlockEntity>> EXP_PATTERN_PROVIDER = create(
             "exp_pattern_provider",
             ExpPatternProviderBlockEntity.class,
@@ -66,7 +66,7 @@ public class ExpBlockEntities {
             ExpBlocks.CPU_1M
     );
 
-    public static Map<ResourceLocation, BlockEntityType<?>> getBlockEntityTypes() {
+    public static Map<Identifier, BlockEntityType<?>> getBlockEntityTypes() {
         return Collections.unmodifiableMap(BLOCK_ENTITY_TYPES);
     }
 
@@ -84,8 +84,12 @@ public class ExpBlockEntities {
             var blocks = Arrays.stream(blockDefs).map(BlockDefinition::block).toArray(AEBaseEntityBlock[]::new);
 
             var typeHolder = new AtomicReference<BlockEntityType<T>>();
-            var type = BlockEntityType.Builder.of((pos, state) -> factory.create(typeHolder.get(), pos, state), blocks)
-                    .build(null);
+            // Round 18: BlockEntityType.Builder was removed; BlockEntityType now has a public
+            // constructor taking (BlockEntitySupplier<T>, Block...). Matches AE2's own
+            // AEBlockEntities#create.
+            BlockEntityType.BlockEntitySupplier<T> supplier =
+                    (pos, state) -> factory.create(typeHolder.get(), pos, state);
+            var type = new BlockEntityType<>(supplier, blocks);
             typeHolder.set(type);
 
             AEBaseBlockEntity.registerBlockEntityItem(type, blockDefs[0].asItem());

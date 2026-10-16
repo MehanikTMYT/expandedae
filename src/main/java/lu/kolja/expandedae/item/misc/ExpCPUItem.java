@@ -3,7 +3,7 @@ package lu.kolja.expandedae.item.misc;
 import appeng.block.crafting.CraftingBlockItem;
 import appeng.util.InteractionUtil;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
@@ -19,7 +19,7 @@ public class ExpCPUItem extends CraftingBlockItem {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (InteractionUtil.isInAlternateUseMode(player)) {
             /* TODO: CHANGE WHEN ADDING COMPONENTS
             int count = player.getItemInHand(hand).getCount();
@@ -29,7 +29,7 @@ public class ExpCPUItem extends CraftingBlockItem {
             inv.placeItemBackInInventory(new ItemStack(component, count));
             inv.placeItemBackInInventory(ExpBlocks.UNIT.stack(count));
 
-            return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide());
+            return InteractionResult.SUCCESS;
             */
         }
         return super.use(level, player, hand);

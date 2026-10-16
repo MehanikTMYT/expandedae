@@ -6,8 +6,6 @@
     }
   ],
   "type": "ae2wtlib:upgrade",
-  "terminal": {
-    "item": "expandedae:wireless_exp_encoding_terminal"
-  },
+  "terminal": "expandedae:wireless_exp_encoding_terminal",
   "terminalName": "exp_encoding"
 }

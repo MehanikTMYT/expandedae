@@ -8,7 +8,7 @@ import appeng.items.AEBaseItem;
 import lu.kolja.expandedae.Expandedae;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -18,7 +18,7 @@ public class ExpCreativeTab {
     public static final DeferredRegister<CreativeModeTab> DR =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Expandedae.MODID);
 
-    public static final ResourceLocation ID = Expandedae.makeId("tab");
+    public static final Identifier ID = Expandedae.makeId("tab");
 
     static {
         DR.register("tab", () -> CreativeModeTab.builder()

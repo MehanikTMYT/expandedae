@@ -1,13 +1,59 @@
 pluginManagement {
     repositories {
         mavenLocal()
+        mavenCentral()
         gradlePluginPortal()
         maven { url = 'https://maven.neoforged.net/releases' }
+    }
+    plugins {
+        id 'net.neoforged.moddev' version '2.0.141'
+        id 'net.neoforged.moddev.repositories' version '2.0.141'
     }
 }
 
 plugins {
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.7.0'
+    id 'net.neoforged.moddev.repositories'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        // Round 18: consume the LOCAL, custom Applied-Energistics-2 fork
+        // (/root/home/forks/ae-stack/core/Applied-Energistics-2, published with
+        //  ./gradlew publishToMavenLocal -> org.appliedenergistics:appliedenergistics2:26.1.11-SNAPSHOT).
+        // exclusiveContent so that mavenLocal can ONLY ever answer for this exact module
+        // and can never silently shadow any other dependency of this project (brief section 24).
+        exclusiveContent {
+            forRepository { mavenLocal() }
+            filter { includeModule('org.appliedenergistics', 'appliedenergistics2') }
+        }
+        maven {
+            name = 'cursemaven'
+            url = 'https://www.cursemaven.com'
+            content { includeGroup 'curse.maven' }
+        }
+        maven {
+            name = 'Modmaven'
+            url = uri('https://modmaven.dev/')
+        }
+        // Fleet EMI 26.1.2 build (JEI removed): only mavenLocal may answer for dev.emi.
+        exclusiveContent {
+            forRepository { mavenLocal() }
+            filter { includeGroup('dev.emi') }
+        }
+        maven {
+            // Round 18: needed only so AdvancedAE's REQUIRED runtime dependency (geckolib) can be
+            // resolved for the dev-runtime smoke tests. Compile scope does not use it.
+            name = 'GeckoLib'
+            url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+            content { includeGroup 'com.geckolib' }
+        }
+        maven {
+            name = 'firstdarkdev'
+            url = 'https://maven.firstdark.dev/releases'
+        }
+    }
 }
 
 rootProject.name = 'expandedae'
